@@ -1,28 +1,39 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Collaboration } from '@tiptap/extension-collaboration'
 import { CollaborationCursor } from '@tiptap/extension-collaboration-cursor'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
-import { History, Share2, GitBranch, GitMerge } from 'lucide-react'
-
-// Set up Yjs document
-const ydoc = new Y.Doc()
-// In a real app, this would connect to the NestJS backend WebSocket
-const provider = new WebsocketProvider('ws://localhost:3001', 'document-1', ydoc, {
-  connect: false // Don't connect until backend is ready
-})
+import { History, Share2, GitBranch, GitMerge, Wifi, WifiOff } from 'lucide-react'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [status, setStatus] = useState('connecting')
+
+  // Memoize Yjs document and provider to prevent recreation
+  const { ydoc, provider } = useMemo(() => {
+    const doc = new Y.Doc()
+    const p = new WebsocketProvider('ws://localhost:3001/collaboration', 'document-1', doc)
+    return { ydoc: doc, provider: p }
+  }, [])
+
+  useEffect(() => {
+    provider.on('status', ({ status }: { status: string }) => {
+      setStatus(status)
+    })
+
+    return () => {
+      provider.disconnect()
+      ydoc.destroy()
+    }
+  }, [provider, ydoc])
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // history: false, // Turn off history so Yjs can handle it
+        history: false, // Turn off history so Yjs can handle it
       }),
-      /*
       Collaboration.configure({
         document: ydoc,
       }),
@@ -33,13 +44,8 @@ function App() {
           color: '#' + Math.floor(Math.random()*16777215).toString(16)
         }
       })
-      */
     ],
-    content: `
-      <h2>Git for Documents</h2>
-      <p>This is a collaborative rich text editor with version control built in.</p>
-      <p>Start editing to see changes...</p>
-    `,
+    content: '', // Content is synced from Yjs
   })
 
   return (
@@ -84,12 +90,6 @@ function App() {
                 <p className="text-sm font-medium text-gray-800">Fixed formatting</p>
                 <p className="text-xs text-gray-500 mt-1">Jane Smith • Yesterday</p>
               </div>
-              
-              <div className="relative pl-4 border-l-2 border-transparent">
-                <div className="absolute w-3 h-3 bg-gray-300 rounded-full -left-[7px] top-1 border-2 border-white"></div>
-                <p className="text-sm font-medium text-gray-800">Initial Draft</p>
-                <p className="text-xs text-gray-500 mt-1">System • 2 days ago</p>
-              </div>
             </div>
           </div>
         </div>
@@ -106,7 +106,14 @@ function App() {
               <History className="w-5 h-5 text-gray-600" />
             </button>
             <div className="flex flex-col">
-              <h1 className="text-lg font-semibold text-gray-800 leading-tight">Project Phoenix - NDA</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-semibold text-gray-800 leading-tight">Project Phoenix - NDA</h1>
+                {status === 'connected' ? (
+                  <Wifi className="w-4 h-4 text-green-500" title="Connected" />
+                ) : (
+                  <WifiOff className="w-4 h-4 text-red-500" title="Disconnected" />
+                )}
+              </div>
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit mt-0.5">Drafting</span>
             </div>
           </div>

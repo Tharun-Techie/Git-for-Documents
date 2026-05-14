@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  documents Document[]
+  commits   Commit[]
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  branches  Branch[]
+  commits   Commit[]
+}
+
+model Branch {
+  id           String   @id @default(uuid())
+  name         String
+  documentId   String
+  document     Document @relation(fields: [documentId], references: [id])
+  headCommitId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Commit {
+  id            String   @id @default(uuid())
+  documentId    String
+  document      Document @relation(fields: [documentId], references: [id])
+  parentCommitId String?
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id])
+  message       String
+  timestamp     DateTime @default(now())
+  
+  operations    Operation[]
+}
+
+model Operation {
+  id        String   @id @default(uuid())
+  commitId  String
+  commit    Commit   @relation(fields: [commitId], references: [id])
+  type      String   // e.g. 'insert', 'delete', 'update_format'
+  delta     Json     // The Yjs delta or ProseMirror operation
+}

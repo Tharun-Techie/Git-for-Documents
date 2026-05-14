@@ -20,8 +20,9 @@ function App() {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        history: false, // Turn off history so Yjs can handle it
+        // history: false, // Turn off history so Yjs can handle it
       }),
+      /*
       Collaboration.configure({
         document: ydoc,
       }),
@@ -32,6 +33,7 @@ function App() {
           color: '#' + Math.floor(Math.random()*16777215).toString(16)
         }
       })
+      */
     ],
     content: `
       <h2>Git for Documents</h2>

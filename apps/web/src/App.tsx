@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { Collaboration } from '@tiptap/extension-collaboration'
 import { CollaborationCursor } from '@tiptap/extension-collaboration-cursor'
 import * as Y from 'yjs'
-import { WebsocketProvider } from 'y-websocket'
+import { HocuspocusProvider } from '@hocuspocus/provider'
 import { History, Share2, GitBranch, GitMerge, Wifi, WifiOff } from 'lucide-react'
 
 function App() {
@@ -14,7 +14,11 @@ function App() {
   // Memoize Yjs document and provider to prevent recreation
   const { ydoc, provider } = useMemo(() => {
     const doc = new Y.Doc()
-    const p = new WebsocketProvider('ws://localhost:3001/collaboration', 'document-1', doc)
+    const p = new HocuspocusProvider({
+      url: 'ws://localhost:3001',
+      name: 'document-1',
+      document: doc,
+    })
     return { ydoc: doc, provider: p }
   }, [])
 
@@ -45,7 +49,6 @@ function App() {
         }
       })
     ],
-    content: '', // Content is synced from Yjs
   })
 
   return (
@@ -68,7 +71,7 @@ function App() {
               <div className="px-3 py-2 bg-blue-50 text-blue-700 rounded-md text-sm font-medium border border-blue-100">
                 main
               </div>
-              <div className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md text-sm cursor-pointer transition-colors">
+              <div className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md text-sm cursor-pointer transition-colors" title="Branching coming soon">
                 legal-review
               </div>
             </div>
@@ -109,9 +112,9 @@ function App() {
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold text-gray-800 leading-tight">Project Phoenix - NDA</h1>
                 {status === 'connected' ? (
-                  <Wifi className="w-4 h-4 text-green-500" title="Connected" />
+                  <Wifi className="w-4 h-4 text-green-500" title="Live Sync Active" />
                 ) : (
-                  <WifiOff className="w-4 h-4 text-red-500" title="Disconnected" />
+                  <WifiOff className="w-4 h-4 text-red-500" title="Offline" />
                 )}
               </div>
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit mt-0.5">Drafting</span>
@@ -127,7 +130,7 @@ function App() {
               <Share2 className="w-4 h-4" />
               Share
             </button>
-            <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
+            <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm" title="Save a version snapshot">
               <GitMerge className="w-4 h-4" />
               Commit
             </button>
@@ -139,8 +142,8 @@ function App() {
             {editor ? (
               <EditorContent editor={editor} className="prose max-w-none p-10 focus:outline-none min-h-[800px]" />
             ) : (
-              <div className="flex items-center justify-center h-[800px] text-gray-400">
-                Loading editor...
+              <div className="flex items-center justify-center h-[800px] text-gray-400 font-medium">
+                Initializing Real-time Sync...
               </div>
             )}
           </div>

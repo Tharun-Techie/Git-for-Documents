@@ -1,121 +1,143 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { Collaboration } from '@tiptap/extension-collaboration'
+import { CollaborationCursor } from '@tiptap/extension-collaboration-cursor'
+import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
+import { History, Share2, GitBranch, GitMerge } from 'lucide-react'
+
+// Set up Yjs document
+const ydoc = new Y.Doc()
+// In a real app, this would connect to the NestJS backend WebSocket
+const provider = new WebsocketProvider('ws://localhost:3001', 'document-1', ydoc, {
+  connect: false // Don't connect until backend is ready
+})
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        history: false, // Turn off history so Yjs can handle it
+      }),
+      Collaboration.configure({
+        document: ydoc,
+      }),
+      CollaborationCursor.configure({
+        provider: provider,
+        user: {
+          name: 'User ' + Math.floor(Math.random() * 100),
+          color: '#' + Math.floor(Math.random()*16777215).toString(16)
+        }
+      })
+    ],
+    content: `
+      <h2>Git for Documents</h2>
+      <p>This is a collaborative rich text editor with version control built in.</p>
+      <p>Start editing to see changes...</p>
+    `,
+  })
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden font-sans">
+      {/* Sidebar - Version History & Branches */}
+      {isSidebarOpen && (
+        <div className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="font-semibold text-lg flex items-center gap-2">
+              <History className="w-5 h-5 text-blue-600" />
+              History
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+                <GitBranch className="w-4 h-4" />
+                Branches
+              </div>
+              <div className="px-3 py-2 bg-blue-50 text-blue-700 rounded-md text-sm font-medium border border-blue-100">
+                main
+              </div>
+              <div className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md text-sm cursor-pointer transition-colors">
+                legal-review
+              </div>
+            </div>
+            
+            <hr className="border-gray-200" />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">Commits</div>
+              
+              {/* Mock Commits */}
+              <div className="relative pl-4 border-l-2 border-gray-200 pb-4">
+                <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1 border-2 border-white"></div>
+                <p className="text-sm font-medium text-gray-800">Updated NDA clause</p>
+                <p className="text-xs text-gray-500 mt-1">John Doe • 10:42 AM</p>
+              </div>
+              
+              <div className="relative pl-4 border-l-2 border-gray-200 pb-4">
+                <div className="absolute w-3 h-3 bg-gray-300 rounded-full -left-[7px] top-1 border-2 border-white"></div>
+                <p className="text-sm font-medium text-gray-800">Fixed formatting</p>
+                <p className="text-xs text-gray-500 mt-1">Jane Smith • Yesterday</p>
+              </div>
+              
+              <div className="relative pl-4 border-l-2 border-transparent">
+                <div className="absolute w-3 h-3 bg-gray-300 rounded-full -left-[7px] top-1 border-2 border-white"></div>
+                <p className="text-sm font-medium text-gray-800">Initial Draft</p>
+                <p className="text-xs text-gray-500 mt-1">System • 2 days ago</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {/* Main Editor Area */}
+      <div className="flex-1 flex flex-col relative h-full">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 shadow-sm z-10">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <History className="w-5 h-5 text-gray-600" />
+            </button>
+            <div className="flex flex-col">
+              <h1 className="text-lg font-semibold text-gray-800 leading-tight">Project Phoenix - NDA</h1>
+              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit mt-0.5">Drafting</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center text-xs text-white font-bold z-20">JD</div>
+              <div className="w-8 h-8 rounded-full bg-green-500 border-2 border-white flex items-center justify-center text-xs text-white font-bold z-10">JS</div>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-1.5 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm">
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+            <button className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
+              <GitMerge className="w-4 h-4" />
+              Commit
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto bg-gray-100 p-8 flex justify-center pb-32">
+          <div className="w-full max-w-[850px] bg-white shadow-md border border-gray-200 rounded-lg shrink-0">
+            {editor ? (
+              <EditorContent editor={editor} className="prose max-w-none p-10 focus:outline-none min-h-[800px]" />
+            ) : (
+              <div className="flex items-center justify-center h-[800px] text-gray-400">
+                Loading editor...
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
   )
 }
 
